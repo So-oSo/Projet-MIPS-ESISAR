@@ -29,7 +29,7 @@ REGION :   STRING -> HEXA
 /*
 Summary : Get the Hexa representation of this instruction
 */
-int String_to_Hexa(char *instruction){
+int String_To_Hexa(char *instruction){
 	int hexa = 0;
 	int *operands = malloc(3*sizeof(int));
 
@@ -48,6 +48,14 @@ int String_to_Hexa(char *instruction){
 		hexa += operands[0] << 16;
 		hexa += operands[1] << 21;
 		hexa += operands[2] << 0;
+	}
+	else if ( Is_Operand(instruction , "AND")) {
+
+		Get_Operands(instruction, operands, 3);
+		hexa += 36;
+		hexa += operands[0] << 11;
+		hexa += operands[1] << 21;
+		hexa += operands[2] << 16;
 	}
 	
 	free(operands);
@@ -121,7 +129,57 @@ Summary : Getting the correct register number.
 TODO : Adding the register based on their Name
 */
 int Get_Register(char *s, int size){
-	int value = String_To_Int(s ,1 ,size - 1);
+	int value;
+	//Cas des nombres
+	if ( s[1] <= '9' )
+	{
+		value = String_To_Int(s ,1 ,size - 1);
+	}
+	else if (size >= 3){
+		if ( size == 5 )
+		{
+			if ( s[1] == 'z' && s[2] == 'e' && s[3] == 'r' && s[4] == 'o')
+			{
+				value = 0;
+			}
+		}
+		else if ( s[1] == 'a' && s[2] == 't'){
+			value = 1;
+		}
+		else if ( s[1] == 'g' && s[2] == 'p'){
+			value = 28;
+		}
+		else if ( s[1] == 's' && s[2] == 'p'){
+			value = 29;
+		}
+		else if ( s[1] == 'f' && s[2] == 'p'){
+			value = 30;
+		}
+		else if ( s[1] == 'r' && s[2] == 'a'){
+			value = 31;
+		}
+		else if ( s[1] == 'v' && s[2] <= '1' ){
+			value = 2 + (s[2] - '0');
+		}
+		else if ( s[1] == 'a' && s[2] <= '3' ){
+			value = 4 + (s[2] - '0');
+		}
+		else if ( s[1] == 's' && s[2] <= '7' ){
+			value = 16 + (s[2] - '0');
+		}
+		else if ( s[1] == 'k' && s[2] <= '1' ){
+			value = 26 + (s[2] - '0');
+		}
+		else if ( s[1] == 't' && s[2] <= '9' ){
+			if ( s[2] >= '8')
+			{
+				value = 24 + (s[2] - '8');
+			}
+			else{
+				value = 8 + (s[2] - '0');
+			}
+		}
+	}
 	return value;
 }
 
