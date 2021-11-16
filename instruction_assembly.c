@@ -2,37 +2,97 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int string_to_hexa(char *instruction){
+
+
+
+
+
+
+
+
+
+/*
+
+REGION :   HEXA -> INSTRUCTION
+
+*/
+
+
+
+/*
+
+REGION :   STRING -> HEXA
+
+*/
+
+
+/*
+Summary : Get the Hexa representation of this instruction
+*/
+int String_to_Hexa(char *instruction){
 	int hexa = 0;
 	int *operands = malloc(3*sizeof(int));
 
-	if ( compare_string(instruction , "ADD")) {
-		get_operands(instruction, operands, 3);
-		hexa += block_offset(32,0);
-		hexa += block_offset( operands[0] ,11);
-		hexa += block_offset( operands[1] ,21);
-		hexa += block_offset( operands[2] ,16);
-	}
-	else if ( compare_string(instruction , "ADDI")) {
-		get_operands(instruction, operands, 4);
-		hexa += block_offset(8,26);
-		hexa += block_offset( operands[0] ,16);
-		hexa += block_offset( operands[1] ,21);
-		hexa += block_offset( operands[2] ,0);
-	}
+	if ( Is_Operand(instruction , "ADD")) {
 
+		Get_Operands(instruction, operands, 3);
+		hexa += 32;
+		hexa += operands[0] << 11;
+		hexa += operands[1] << 21;
+		hexa += operands[2] << 16;
+	}
+	else if ( Is_Operand(instruction , "ADDI")) {
+
+		Get_Operands(instruction, operands, 4);
+		hexa += 8 << 26;
+		hexa += operands[0] << 16;
+		hexa += operands[1] << 21;
+		hexa += operands[2] << 0;
+	}
+	
 	free(operands);
 	return hexa;
 }
 
 
+/*
+Summary : Return all operands in decimal
+*/
+void Get_Operands(char *s ,int *operands ,int start){
+	char *s_part = malloc( sizeof(char)*10 );
+	int index = start;
+	int i_s_part = 0;
+	int i_operands = 0;
 
-int compare_string(char *string1, char * string2){
+	while ( !Instruction_Is_Finish(s , index) ){
+		while(s[index] == ' ' || s[index] == ','){
+			index++;
+		}
+		
+		while( s[index] != ',' && !Instruction_Is_Finish(s , index) ) {
+			s_part[i_s_part] = s[index];
+			index++;
+			i_s_part++;
+		}
+		if ( s_part[0] == '$') {
+			operands[i_operands] = Get_Register( s_part, i_s_part);
+		}
+		else {
+			operands[i_operands] = String_To_Int( s_part , 0,i_s_part - 1);
+		}
+		i_operands++;
+		i_s_part = 0;
+	}
+}
+
+/*
+Summary : Boolean to tell if the start of s1 is the same as s2.
+*/
+int Is_Operand(char *s1, char * s2){
 	int same = 1;
 	int i = 0;
-
-	while ( same && (string1[i] != ' ' || string2[i] != '\0') ) {
-		if ( string1[i] != string2[i]) {
+	while ( same && (s1[i] != ' ' || s2[i] != '\0') ) {
+		if ( s1[i] != s2[i]) {
 			same = 0;
 		}
 		i++;
@@ -40,69 +100,38 @@ int compare_string(char *string1, char * string2){
 	return same;
 }
 
-int block_offset(int value, int index){
-
-	return value << index;
-}
-
-void get_operands(char *instruction,int *operands, int index){
-	char *cut = malloc(sizeof(char)*10); //On prend 10 car aucun offset ou registre dépasse 10 caractères
-	int i = index;
-	int cut_i = 0;
-	int ope_i = 0;
-
-	//Boucle qui parcours toute l'instruction
-	while ( !end_of_instruction(instruction, i) && instruction[i] != '\0') {
-
-		//Première boucle qui va au début du 'nombre'
-		while (instruction[i] == ' '){
-			i++;
-		}
-
-		while ( instruction[i] != ',' && !end_of_instruction(instruction, i)) {
-			cut[cut_i] = instruction[i];
-			i++;
-			cut_i++;
-		}
-		printf("test\n");
-		if (cut[0] == '$') {
-			operands[ope_i] = register_to_int(cut, cut_i);
-		}
-		else if ( !end_of_instruction(instruction, i) ){
-			operands[ope_i] = string_to_decimal(cut, 0,cut_i - 1);
-		}
-		i++;
-		ope_i++;
-		cut_i = 0;
-	}
-	free(cut);
-}
-
-int end_of_instruction(char *string, int index){
-	int space = 1;
-	int i = index;
-	while ( space  && string[i] != '\0' && string[i] != '#') {
-		if ( string[i] != ' ') {
-			space = 0;
-		}
+/*
+Summary : Boolean to tell if the Instruction is Finish.
+*/
+int Instruction_Is_Finish( char *s, int start){
+	int is_finish = 1;
+	int i = start;
+	while	( s[i] == ' '){
 		i++;
 	}
-	return space;
+	if ( s[i] != '#' && s[i] != '\0' )
+	{
+		is_finish = 0;
+	}
+	return is_finish;
 }
 
-
-//Ajouter le cas des registres avec les noms
-int register_to_int(char *string, int size){
-	int value = 0;
-
-	value = string_to_decimal(string,1,size - 1);
+/*
+Summary : Getting the correct register number.
+TODO : Adding the register based on their Name
+*/
+int Get_Register(char *s, int size){
+	int value = String_To_Int(s ,1 ,size - 1);
 	return value;
 }
 
-int string_to_decimal(char *string, int start, int end){
+/*
+Summary : Convert a string into an Int.
+*/
+int String_To_Int(char *s, int start, int end){
 	int value = 0;
 	for (int i = start; i <= end; i++) {
-		value = 10*value + (string[i]-'0');
+		value = 10*value + (s[i]-'0');
 	}
 	return value;
 }
